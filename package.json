@@ -1,0 +1,50 @@
+{
+  "name": "micro-mol",
+  "version": "1.0.0",
+  "description": "My Moleculer microservices project",
+  "scripts": {
+    "dev": "moleculer-runner --repl --hot services",
+    "start": "moleculer-runner",
+    "ci": "jest --watch",
+    "test": "./node_modules/mocha/bin/mocha test/unit/user.spec.js --reporter spec",
+    "lint": "eslint services"
+  },
+  "keywords": [
+    "microservices",
+    "moleculer"
+  ],
+  "author": "",
+  "devDependencies": {
+    "eslint": "^5.0.1",
+    "jest": "^23.3.0",
+    "jest-cli": "^23.3.0",
+    "mocha": "^5.2.0",
+    "moleculer-repl": "^0.5.0"
+  },
+  "dependencies": {
+    "lodash": "4.17.10",
+    "moleculer-console-tracer": "0.1.1",
+    "slug": "0.9.1",
+    "jsonwebtoken": "8.3.0",
+    "bcrypt": "2.0.1",
+    "ajv": "^6.5.2",
+    "ioredis": "^3.2.2",
+    "moleculer": "^0.13.0",
+    "moleculer-web": "^0.8.0",
+    "nats": "^1.0.0",
+    "pg": "^7.4.3",
+    "pg-hstore": "^2.3.2",
+    "sequelize": "^4.38.0"
+  },
+  "engines": {
+    "node": ">= 8.x.x"
+  },
+  "jest": {
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node",
+    "rootDir": "./services",
+    "roots": [
+      "../test"
+    ]
+  }
+}
