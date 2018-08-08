@@ -25,6 +25,75 @@ const loginUserRegisteringDataSchema = {
 	properties:{
 		password:{
 			type: "string",
+			pattern: /^[a-zA-Z0-9]+$/,
+			min: 8,
+			max: 30
+		},
+		email: {
+			type: "email"
+		},
+		names: {
+			type: "string",
+			min: 3,
+			max: 100
+		},
+		lastnames: {
+			type: "string",
+			min: 3,
+			max: 100
+		},
+		rol: {
+      type: "number",
+			min: 1,
+			integer:true
+		},
+		company: {
+      type: "number",
+			min: 1,
+			integer:true
+		},
+    document_u:{
+      type: "number",
+			min: 1,
+			integer:true
+    },
+    document_type:{
+      type: "number",
+			min: 1,
+			integer:true
+    },
+    country:{
+      type: "string",
+			min: 3,
+			max: 50,
+			optional:true
+    },
+    city:{
+      type: "string",
+			min: 3,
+			max: 50,
+			optional:true
+    },
+    description:{
+      type: "string",
+			min: 3,
+			max: 500,
+			optional:true
+    },
+    state:{
+      type: "boolean"
+    }
+	},
+	required: ['password','email','names','lastnames','rol','company','document_u','document_type','state']
+}
+
+/*
+const loginUserRegisteringDataSchema = {
+	title: "UserData",
+	type: "object",
+	properties:{
+		password:{
+			type: "string",
 			regexp: "/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{8,})/",
 			minLength: 8,
 			maxLength: 30
@@ -84,7 +153,7 @@ const loginUserRegisteringDataSchema = {
     }
 	},
 	required: ['password','email','names','lastnames','rol','company','document_u','document_type','state']
-}
+}*/
 
 module.exports = {
 		loginUserCredentialsSchema: loginUserCredentialsSchema,

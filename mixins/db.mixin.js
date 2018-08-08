@@ -192,7 +192,7 @@ function createModelDataBase(callback) {
       document_u: 1017233591,
       document_type: 1,
       rol: 1,
-      company: 1,
+      company: 2,
       password: 'Hesoyam22',
       state: true
     }
@@ -202,7 +202,7 @@ function createModelDataBase(callback) {
       password: 'Hesoyam232'
     };
 
-    authenticateUser(userParams,(res)=>{
+    createUser(user,(res)=>{
         console.log(res);
     });*/
     callback(sequelize);
@@ -222,14 +222,39 @@ function createUser(userparams, callback) {
     /*console.log(user.get({
       plain: true
     }))
-    console.log(created)
-    */
-  }).then((res)=>{
-    //console.log(err);
-    callback(true);
+    console.log(created)*/
+  //  delete user.dataValues.password;
+    let res={
+      type: 'success',
+      message: user.email + ' was registered successfully',
+      data: user.dataValues
+    };
+    callback(res);
   }).catch((err)=>{
     //console.log(err);
-    callback(false);
+    let error;
+    if(err.name==='SequelizeForeignKeyConstraintError'){
+      error={
+        type:'error',
+        name: 'SequelizeForeignKeyConstraintError',
+        message: 'insert or update in the table user_t violates the foreign key'
+      };
+    }else if(err.name==='SequelizeUniqueConstraintError'){
+      error={
+        type:'error',
+        name: 'SequelizeUniqueConstraintError',
+        message: 'duplicate key violates uniqueness restriction'
+      };
+    }else if(err.name==='SequelizeValidationError'){
+      error={
+        type:'error',
+        name: 'SequelizeValidationError',
+        message: 'some field entered does not have the correct format'
+      };
+    }else{
+      callback(err);
+    }
+    callback(error);
   });
 }
 
@@ -239,7 +264,12 @@ function deleteUser() {
 
 function getUserByEmail(email, callback) {
   user_t.findById(email).then(user => {
-    callback(user.dataValues);
+    if(user!=null){
+    //  delete user.dataValues.password;
+      callback(user.dataValues);
+    }else{
+      callback(user);
+    }
   }).catch((err)=>{
     callback(err);
   })
