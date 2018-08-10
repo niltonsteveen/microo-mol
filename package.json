@@ -6,7 +6,7 @@
     "dev": "moleculer-runner --repl --hot services",
     "start": "moleculer-runner",
     "ci": "jest --watch",
-    "test": "./node_modules/mocha/bin/mocha test/unit/user.spec.js --reporter spec",
+    "test": "mocha test/unit/user.spec.js --reporter spec",
     "lint": "eslint services"
   },
   "keywords": [
@@ -24,6 +24,7 @@
   "dependencies": {
     "ajv": "^6.5.2",
     "bcrypt": "^3.0.0",
+    "chai": "^4.1.2",
     "ioredis": "^3.2.2",
     "jsonwebtoken": "^8.3.0",
     "lodash": "^4.17.10",

@@ -10,16 +10,16 @@ sobre inorks:
  - redireccionar y autoscroll
  
 
-quitar cuenta
+// quitar cuenta
 
 
-en SDN :
- - SD-IOT POR SION
- - encuentra beneficios ....: redireccionar a soluciones
+// en SDN :
+// - SD-IOT POR SION
+// - encuentra beneficios ....: redireccionar a soluciones
 
-poner un link para descargar brochures
-comentar brochure de sds
-poner linea de titulos mas cortos
+// poner un link para descargar brochures
+// comentar brochure de sds
+//poner linea de titulos mas cortos
 
 quitar productos y aliados (opcional) 
 

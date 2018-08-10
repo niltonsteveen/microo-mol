@@ -1,4 +1,5 @@
 const Sequelize = require('sequelize');
+const bcrypt 		= require("bcrypt");
 const database='user_management';
 const username='postgres';
 const password='root';
@@ -185,17 +186,20 @@ function createModelDataBase(callback) {
   document_type.hasMany(user_t, {foreignKey: 'document_type', sourceKey: 'id'});
 
   sequelize.sync().then(()=>{
-  /*  let user={
-      email: 'nilton.velez@udea.edu.co',
-      names:'nilton steveen',
-      lastnames: 'velez garcia',
-      document_u: 1017233591,
+    deleteUser('nilton.velez@udea.edu.co');
+    let user={
+      email: 'admin@correo.com',
+      names:'Jhon',
+      lastnames: 'Doe',
+      document_u: 1234567890,
       document_type: 1,
       rol: 1,
       company: 2,
-      password: 'Hesoyam22',
+      password: 'AdminRoot1',
       state: true
     }
+
+    user.password = bcrypt.hashSync(user.password, 10);
 
     let userParams={
       email: 'nilton.velez@udea.edu.co',
@@ -204,7 +208,7 @@ function createModelDataBase(callback) {
 
     createUser(user,(res)=>{
         console.log(res);
-    });*/
+    });
     callback(sequelize);
   });
 
@@ -231,47 +235,43 @@ function createUser(userparams, callback) {
     };
     callback(res);
   }).catch((err)=>{
-    //console.log(err);
-    let error;
-    if(err.name==='SequelizeForeignKeyConstraintError'){
-      error={
-        type:'error',
-        name: 'SequelizeForeignKeyConstraintError',
-        message: 'insert or update in the table user_t violates the foreign key'
-      };
-    }else if(err.name==='SequelizeUniqueConstraintError'){
-      error={
-        type:'error',
-        name: 'SequelizeUniqueConstraintError',
-        message: 'duplicate key violates uniqueness restriction'
-      };
-    }else if(err.name==='SequelizeValidationError'){
-      error={
-        type:'error',
-        name: 'SequelizeValidationError',
-        message: 'some field entered does not have the correct format'
-      };
-    }else{
-      callback(err);
-    }
+    //console.log(err)
+    let error={
+      type:'error',
+      error: err
+    };
     callback(error);
   });
 }
 
-function deleteUser() {
-
+function deleteUser(emailID) {
+  user_t.destroy({
+    where: {
+      email: emailID
+    }
+  });
 }
 
 function getUserByEmail(email, callback) {
   user_t.findById(email).then(user => {
     if(user!=null){
     //  delete user.dataValues.password;
-      callback(user.dataValues);
+      let successData={
+        type:'success',
+        data: user.dataValues
+      };
+      callback(successData);
     }else{
+      console.log('sera q entro por aca')
       callback(user);
     }
   }).catch((err)=>{
-    callback(err);
+    console.log(err)
+    let error={
+      type:'error',
+      error: err
+    };
+    callback(error);
   })
 }
 
@@ -282,6 +282,7 @@ function listUsers(callback) {
     let arrayResponse=[];
 
     result.rows.forEach((user, index) => {
+      delete user.dataValues.password;
       arrayResponse.push(user.dataValues);
     });
     callback(arrayResponse);
@@ -308,5 +309,6 @@ module.exports={
   createUser:createUser,
   listUsers:listUsers,
   getUserByEmail:getUserByEmail,
-  authenticateUser:authenticateUser
+  authenticateUser:authenticateUser,
+  deleteUser:deleteUser
 };

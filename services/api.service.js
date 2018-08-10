@@ -37,7 +37,7 @@ module.exports = {
 				//user's actions
 				"POST /sign_up": "users.signup",
 				"GET /user_by_id": "users.getUserByEmail",
-				"GET /allUsers": "users.getAllUsers"
+				"GET /allUsers/:company": "users.getAllUsers"
 			},
 			mappingPolicy: "restrict",
 			bodyParsers: {
@@ -64,17 +64,17 @@ module.exports = {
 			res.setHeader("Content-type", "application/json; charset=utf-8");
 			res.writeHead(err.code || 500);
 
-			if (err.code == 422) {
+			/*if (err.code == 422) {
 				let o = {};
 				err.data.forEach(e => {
 					let field = e.field.split(".").pop();
 					o[field] = e.message;
 				});
 				res.end(JSON.stringify({ errors: o }, null, 2));
-			} else {
+			} else {*/
 				const errObj = _.pick(err, ["name", "message", "code", "type", "data"]);
 				res.end(JSON.stringify(errObj, null, 2));
-			}
+			//}
 			this.logResponse(req, res, err? err.ctx : null);
 		}
 	},
@@ -99,18 +99,20 @@ module.exports = {
 				.then(token => {
 					if (token) {
 						// Verify JWT token
+						console.log(token)
 						return ctx.call("users.resolveToken", { token })
 							.then(user => {
 								if (user) {
 									this.logger.info("Authenticated via JWT: ", user.email);
 									// Reduce user fields (it will be transferred to other nodes)
-									ctx.meta.user = _.pick(user, ["email", "names", "organization", "state"]);
+									ctx.meta.user = _.pick(user['data'], ["email", "document_u", "company", "state", "rol"]);
 									ctx.meta.token = token;
-									ctx.meta.userID = user.email;
+									ctx.meta.userID = user['data']['email'];
 								}
 								return user;
 							})
 							.catch(err => {
+								console.log('entro por null')
 								// Ignored because we continue processing if user is not exist
 								return null;
 							});

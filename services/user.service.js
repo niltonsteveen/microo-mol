@@ -3,6 +3,7 @@ const DbService = require("../mixins/db.mixin");
 const validation = require("../schemas/user.validation");
 const userSchema=require('../schemas/user.schema');
 const mDB	= require("moleculer-db");
+const databaseDaoError= require("../MyDaoException/MyExceptions");
 
 //const crypto 		= require("crypto");
 const bcrypt 		= require("bcrypt");
@@ -38,7 +39,20 @@ module.exports = {
 	 */
 	actions: {
 		getAllUsers:{
-			
+			params:{
+				company:{type:"string"}
+			},
+			auth: "required",
+			handler(ctx){
+				return this.Promise.resolve()
+					.then(()=>{
+						return new Promise((resolve,reject)=>{
+							DbService.listUsers((res)=>{
+									return resolve(res);
+							})
+						})
+					})
+			}
 		},
 		login:{
 			params: {
@@ -57,8 +71,8 @@ module.exports = {
 					.then(()=>{
 						let resultValidation=validation.validateUserCredentials(userSchema.loginUserCredentialsSchema, user);
 						if(typeof(resultValidation)!='boolean'){
-							return this.Promise.reject(new MoleculerClientError("Entity validation error!",
-							422, "", [{field: 'message', message:'Either username or password was incorrectly entered'},{ field: "details", message: resultValidation[0]}]));
+							let er=new databaseDaoError.schemaValidationException('Some data in the body was incorrectly entered', resultValidation[0]);
+							return this.Promise.reject(er);
 						}
 					})
 					.then(()=>{
@@ -67,9 +81,11 @@ module.exports = {
 								DbService.getUserByEmail(user.email,(res)=>{
 									currentUser=res;
 									if(!res){
-										return reject(new MoleculerClientError("email doesn't exist!",
-										422, "", [{field: 'message', message:'User with email: '+user.email+ ' doesn\'t exist'}]));
-									}else {
+										return reject(new databaseDaoError.validationException('the query did not get any results, email not found','the query did not get any results, email not found'));
+									}else if(res['type']==='error' && res['error']['name']==='SequelizeDatabaseError'){
+										let er=new databaseDaoError.DataBaseException('The operator doesn\'t exist: character varying = integer, expected varchar type', res['error']['parent']);
+										return reject(er);
+									}else{
 										return resolve();
 									}
 								});
@@ -78,16 +94,16 @@ module.exports = {
 					})
 					.then(()=>{
 						return new Promise((resolve, reject)=>{
-						  bcrypt.compare(user.password, currentUser.password).then(res => {
+						  bcrypt.compare(user.password, currentUser.data['password']).then(res => {
 						    if(!res){
-						      return reject(new MoleculerClientError("Wrong password!", 422, "", [{ field: "error", message: "Wrong password!"}]));
+						      return reject(new databaseDaoError.passwordValidationException('Wrong password!','Wrong password!'));
 						    }else{
 						      const payload = {
-						          email: currentUser.email,
-						          admin: currentUser.state,
-						          organization: currentUser.company
+						          email: currentUser.data['email'],
+						          admin: currentUser.data['state'],
+						          organization: currentUser.data['company']
 						      };
-						      const generatedToken = jwt.sign( payload, this.settings.JWT_SECRET);
+						      const generatedToken = jwt.sign(payload, this.settings.JWT_SECRET, {expiresIn:60});
 						      return resolve({"your-token": generatedToken});
 						    }
 						  })
@@ -96,40 +112,62 @@ module.exports = {
 			}
 		},
 		signup: {
+			auth: "required",
 			params: {
 				user:{type:"object"}
 			},
 			handler(ctx) {
-				//sync()
-
+				console.log(ctx.meta.user)
 				let entity = ctx.params.user;
-				return this.validateEntity(entity)
-					.then(() => {
-						console.log('huy hasta q entro')
-						if (entity.email){
-							return new Promise((resolve, reject)=>{
-								DbService.getUserByEmail(entity.email,(res)=>{
-									if(res){
-										return reject(new MoleculerClientError("Email is exist!",
-										422, "", [{field: 'message', message:'Email '+entity.email+ ' is already in use'}]));
+				if(ctx.meta.user.rol===1){
+					return this.validateEntity(entity)
+						.then(() => {
+							if (entity.email){
+								return new Promise((resolve, reject)=>{
+									DbService.getUserByEmail(entity.email,(res)=>{
+										if(!res){
+											return resolve()
+											//return reject(new databaseDaoError.validationException('the query did not get any results, email not found','the query did not get any results, email not found'));
+										}else if(res['type']==='error' && res['error']['name']==='SequelizeDatabaseError'){
+											let er=new databaseDaoError.DataBaseException('The operator doesn\'t exist: character varying = integer, expected varchar type', res['error']['parent']);
+											return reject(er);
+										}else{
+											return reject(new databaseDaoError.validationException('Email '+entity.email+ ' is already in use','Email '+entity.email+ ' is already in use'));
+											//return resolve();
+										}
+									});
+								});
+							}
+						})
+						.then(()=>{
+							entity.password = bcrypt.hashSync(entity.password, 10);
+							return new Promise(function(resolve, reject) {
+								DbService.createUser(entity,(res)=>{
+									if(res['type']==='error'&&res['error']['name']==='SequelizeValidationError'){
+										let er=new databaseDaoError.validationException('not null violation: some mandatory fields were not entered', res['error']['errors']);
+										return reject(er);
+									}else if(res['type']==='error'&&res['error']['name']==='SequelizeForeignKeyConstraintError'){
+										let er=new databaseDaoError.foreignKeyException('Foreign Key error: Insert or update in any table violates a foreign key', 'Foreign Key error: Insert or update in any table violates a foreign key');
+										return reject(er);
+									}else if(res['type']==='error'&&res['error']['name']==='SequelizeUniqueConstraintError'){
+										let er=new databaseDaoError.uniqueConstraintException('Primary Key error: duplicate key violates uniqueness restriction', 'Primary Key error: duplicate key violates uniqueness restriction');
+										return reject(er);
+									}else{
+										delete res.data.password;
+										return resolve(res);
 									}
 								});
 							});
-						}
-					})
-					.then(()=>{
-						entity.password = bcrypt.hashSync(entity.password, 10);
-						return new Promise(function(resolve, reject) {
-							DbService.createUser(entity,(result)=>{
-								console.log(result);
-								return resolve(result);
-							});
+						})
+						.catch((err)=>{
+							let er=new databaseDaoError.schemaValidationException('Some data in the body was incorrectly entered', err.data);
+							return Promise.reject(er);
 						});
-					})
-					.catch((err)=>{
-						return Promise.reject(new MoleculerClientError("Entity validation error!",
-						422, err['type'], [{field: 'message', message:'Some data for new user were incorrectly entered'},{ field: "details", message: err.data}]));
-					});
+				}else{
+					let er=new databaseDaoError.allowedRolException('The current user doesn\'t have permission for to create users', 'The current user doesn\'t have permission for to create users');
+					return Promise.resolve(this.generateDataError(er, 'AllowedRolException'));
+				}
+
 			}
 		},
 		resolveToken: {
@@ -143,18 +181,21 @@ module.exports = {
 			handler(ctx) {
 				return new this.Promise((resolve, reject) => {
 					jwt.verify(ctx.params.token, this.settings.JWT_SECRET, (err, decoded) => {
+						//console.log(decoded)
 						if (err)
 							return reject(err);
-
 						resolve(decoded);
 					});
 
 				})
-					.then(decoded => {
-						console.log(decoded);
-						/*if (decoded.id)
-							return this.getById(decoded.id);*/
-					});
+				.then(decoded => {
+					if (decoded.email)
+						return new Promise((resolve,reject)=>{
+							DbService.getUserByEmail(decoded.email, (user)=>{
+								return resolve(user);
+							});
+						})
+				})
 			}
 		},
 	},
@@ -170,6 +211,19 @@ module.exports = {
 	 * Methods
 	 */
 	methods: {
+		generateDataError(errorG, nameG){
+			let error={
+				error:{
+					code:errorG.code,
+					type:errorG.type,
+					data:errorG.data,
+					name: nameG
+				}
+			};
+			console.log('entrooooooooooooo')
+			console.log(error)
+			return (error);
+		}
 
 	},
 
