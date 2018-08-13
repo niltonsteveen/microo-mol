@@ -36,8 +36,40 @@ module.exports = {
 
 				//user's actions
 				"POST /sign_up": "users.signup",
-				"GET /user_by_id": "users.getUserByEmail",
-				"GET /allUsers/:company": "users.getAllUsers"
+				"GET /user_by_id/:email": "users.getUserByEmail",
+				"GET /allUsers": "users.getAllUsers",
+				"PUT /update": "users.updateUser"
+			},
+			mappingPolicy: "restrict",
+			bodyParsers: {
+				json: {
+					strict: false
+				},
+				urlencoded: {
+					extended: false
+				}
+			},
+			whitelist: [
+				// Access to any actions in all services under "/api" URL
+				"**"
+			]
+		},{
+			path: "/api/device",
+			authorization: true,
+
+			aliases: {
+				//get paths
+				"GET /getDeviceById": "devices.getDeviceById",
+				"GET /getDeviceByName": "devices.getDeviceByName",
+				"GET /getDeviceByManufacturer": "devices.getDeviceByManufacturer",
+				"GET /getAllDevices": "devices.getAllDevices",
+				"GET /getDeviceByIp": "devices.getDeviceByIp",
+
+				//post paths
+				"POST /insertDevice": "devices.insertDevice",
+
+				//delete paths
+				"POST /deleteDevice": "devices.deleteDevice",
 			},
 			mappingPolicy: "restrict",
 			bodyParsers: {
@@ -99,7 +131,7 @@ module.exports = {
 				.then(token => {
 					if (token) {
 						// Verify JWT token
-						console.log(token)
+						//console.log(token)
 						return ctx.call("users.resolveToken", { token })
 							.then(user => {
 								if (user) {

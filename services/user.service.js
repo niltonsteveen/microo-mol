@@ -1,7 +1,7 @@
 "use strict";
 const DbService = require("../mixins/db.mixin");
-const validation = require("../schemas/user.validation");
-const userSchema=require('../schemas/user.schema');
+const validation = require("../schemas/user/user.validation");
+const userSchema=require('../schemas/user/user.schema');
 const mDB	= require("moleculer-db");
 const databaseDaoError= require("../MyDaoException/MyExceptions");
 
@@ -38,17 +38,100 @@ module.exports = {
 	 * Actions
 	 */
 	actions: {
-		getAllUsers:{
+		updateUser:{
+			auth: "required",
+			params: {
+				user:{type:"object"}
+			},
+			handler(ctx) {
+				/*console.log(ctx.meta.user)
+				let entity = ctx.params.user;
+					return this.validateEntity(entity)
+						.then(() => {
+							if (entity.email){
+								return new Promise((resolve, reject)=>{
+									DbService.getUserByEmail(entity.email,(res)=>{
+										if(!res){
+											return resolve()
+											//return reject(new databaseDaoError.validationException('the query did not get any results, email not found','the query did not get any results, email not found'));
+										}else if(res['type']==='error' && res['error']['name']==='SequelizeDatabaseError'){
+											let er=new databaseDaoError.DataBaseException('The operator doesn\'t exist: character varying = integer, expected varchar type', res['error']['parent']);
+											return reject(er);
+										}else{
+											return reject(new databaseDaoError.validationException('Email '+entity.email+ ' is already in use','Email '+entity.email+ ' is already in use'));
+											//return resolve();
+										}
+									});
+								});
+							}
+						})
+						.then(()=>{
+							entity.password = bcrypt.hashSync(entity.password, 10);
+							return new Promise(function(resolve, reject) {
+								DbService.createUser(entity,(res)=>{
+									if(res['type']==='error'&&res['error']['name']==='SequelizeValidationError'){
+										let er=new databaseDaoError.validationException('not null violation: some mandatory fields were not entered', res['error']['errors']);
+										return reject(er);
+									}else if(res['type']==='error'&&res['error']['name']==='SequelizeForeignKeyConstraintError'){
+										let er=new databaseDaoError.foreignKeyException('Foreign Key error: Insert or update in any table violates a foreign key', 'Foreign Key error: Insert or update in any table violates a foreign key');
+										return reject(er);
+									}else if(res['type']==='error'&&res['error']['name']==='SequelizeUniqueConstraintError'){
+										let er=new databaseDaoError.uniqueConstraintException('Primary Key error: duplicate key violates uniqueness restriction', 'Primary Key error: duplicate key violates uniqueness restriction');
+										return reject(er);
+									}else{
+										delete res.data.password;
+										return resolve(res);
+									}
+								});
+							});
+						})
+						.catch((err)=>{
+							let er=new databaseDaoError.schemaValidationException('Some data in the body was incorrectly entered', err.data);
+							return Promise.reject(er);
+						});*/
+			}
+		},
+		getUserByEmail:{
 			params:{
-				company:{type:"string"}
+				email:{type:'string'}
 			},
 			auth: "required",
 			handler(ctx){
 				return this.Promise.resolve()
 					.then(()=>{
 						return new Promise((resolve,reject)=>{
-							DbService.listUsers((res)=>{
+							DbService.getUserByEmail(ctx.params.email,(res)=>{
+								if(!res){
+									let er=new databaseDaoError.validationException('The user entered doesn\'t exist or was incorrectly entered',
+										'The user entered doesn\'t exist or was incorrectly entered');
+									return resolve(this.generateDataError(er, 'ValidationException'));
+								}else if(res['type']==='error' && res['error']['name']==='SequelizeDatabaseError'){
+									let er=new databaseDaoError.dataBaseException('The operator doesn\'t exist: character varying = integer, expected varchar type', res['error']['parent']);
+									return resolve(this.generateDataError(er, 'DataBaseException'));
+								}else{
 									return resolve(res);
+								}
+							})
+						})
+					})
+			}
+		},
+		getAllUsers:{
+			/*params:{
+				company:{type:"string"}
+			},*/
+			auth: "required",
+			handler(ctx){
+				return this.Promise.resolve()
+					.then(()=>{
+						return new Promise((resolve,reject)=>{
+							DbService.listUsers((res)=>{
+								if(res.length>0){
+									return resolve(res);
+								}else{
+									return resolve({message:'The requested query didn\'t get any results'})
+								}
+
 							})
 						})
 					})
@@ -103,7 +186,8 @@ module.exports = {
 						          admin: currentUser.data['state'],
 						          organization: currentUser.data['company']
 						      };
-						      const generatedToken = jwt.sign(payload, this.settings.JWT_SECRET, {expiresIn:60});
+									console.log(payload);
+						      const generatedToken = jwt.sign(payload, this.settings.JWT_SECRET);
 						      return resolve({"your-token": generatedToken});
 						    }
 						  })
@@ -179,9 +263,11 @@ module.exports = {
 				token: "string"
 			},
 			handler(ctx) {
+				//console.log(ctx.params.token)
 				return new this.Promise((resolve, reject) => {
 					jwt.verify(ctx.params.token, this.settings.JWT_SECRET, (err, decoded) => {
-						//console.log(decoded)
+						//console.log(err)
+						//console.log('ppppppppppppppppppppp')
 						if (err)
 							return reject(err);
 						resolve(decoded);

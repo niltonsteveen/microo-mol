@@ -51,15 +51,3 @@ module.exports={
 	passwordValidationException:PasswordValidationException,
 	allowedRolException:AllowedRolException
 }
-/*
-class DaoException extends MoleculerError {
-	constructor(msg, data) {
-		super(msg || `This is my business error.`, 500, "MY_BUSINESS_ERROR", data);
-	}
-}
-
-class DaoException extends MoleculerError {
-	constructor(msg, data) {
-		super(msg || `This is my business error.`, 500, "MY_BUSINESS_ERROR", data);
-	}
-}*/

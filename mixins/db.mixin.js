@@ -182,11 +182,12 @@ function createModelDataBase(callback) {
     }
   },{timestamps: false, tableName: 'user_type'});
   organization.hasMany(user_t, {foreignKey: 'company', sourceKey: 'id'});
+  user_t.belongsTo(organization, {foreignKey: 'company', targetKey: 'id'});
   user_type.hasMany(user_t, {foreignKey: 'rol', sourceKey: 'id'});
   document_type.hasMany(user_t, {foreignKey: 'document_type', sourceKey: 'id'});
 
   sequelize.sync().then(()=>{
-    deleteUser('nilton.velez@udea.edu.co');
+    /*deleteUser('nilton.velez@udea.edu.co');*/
     let user={
       email: 'admin@correo.com',
       names:'Jhon',
@@ -194,7 +195,7 @@ function createModelDataBase(callback) {
       document_u: 1234567890,
       document_type: 1,
       rol: 1,
-      company: 2,
+      company: 1,
       password: 'AdminRoot1',
       state: true
     }
@@ -277,12 +278,21 @@ function getUserByEmail(email, callback) {
 
 function listUsers(callback) {
   user_t.findAndCountAll({
+    //attributes:['email','names'],
+    include:[{
+      model: organization,
+      required: true,
+      attributes:['name']
+    }]
   })
   .then(result => {
+    //console.log(result.rows);
     let arrayResponse=[];
 
     result.rows.forEach((user, index) => {
       delete user.dataValues.password;
+      delete user.dataValues.organization;
+      user.dataValues.company=user.organization.name;
       arrayResponse.push(user.dataValues);
     });
     callback(arrayResponse);

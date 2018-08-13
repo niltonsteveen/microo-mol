@@ -159,13 +159,23 @@ describe("Test 'user' service", () => {
 
 		it("Test to get user by email without domain, should return with 'true' value", (done) => {
 			DBService.getUserByEmail('fdsafdsafdsa',(res)=>{
-				if(!res){
+				if(!res){//null
 					assert.ok(true);
 					done();
 				}else{
 					assert.ok(false);
 					done();
 				}
+			});
+		});
+	});
+
+	describe("Test get all users", () => {
+		it("Test to get all users with your organization", (done) => {
+			DBService.listUsers((res)=>{
+				console.log(res);
+				assert.ok(true);
+				done();
 			});
 		});
 	});
