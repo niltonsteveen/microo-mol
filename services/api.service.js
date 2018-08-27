@@ -59,11 +59,11 @@ module.exports = {
 
 			aliases: {
 				//get paths
-				"GET /getDeviceById": "devices.getDeviceById",
-				"GET /getDeviceByName": "devices.getDeviceByName",
-				"GET /getDeviceByManufacturer": "devices.getDeviceByManufacturer",
+				"GET /getDeviceById/:deviceId": "devices.getDeviceById",
+				"GET /getDeviceByName/:deviceName": "devices.getDeviceByName",
+				"GET /getDevicesByManufacturer/:deviceManufacturer": "devices.getDevicesByManufacturer",
 				"GET /getAllDevices": "devices.getAllDevices",
-				"GET /getDeviceByIp": "devices.getDeviceByIp",
+				"GET /getDeviceByIp/:deviceIp": "devices.getDeviceByIp",
 
 				//post paths
 				"POST /insertDevice": "devices.insertDevice",

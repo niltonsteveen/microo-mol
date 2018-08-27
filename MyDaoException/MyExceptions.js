@@ -42,6 +42,24 @@ class AllowedRolException extends MoleculerError {
 	}
 }
 
+function generateDataError(errorG, nameG){
+	console.log('arreglando el error')
+	console.log(errorG.data.detail)
+	console.log('arreglando el error')
+	if(errorG.data.detail){
+		errorG.data=errorG.data.detail;
+	}
+	let error={
+		error:{
+			code:errorG.code,
+			type:errorG.type,
+			data:errorG.data,
+			name: nameG
+		}
+	};
+	return (error);
+}
+
 module.exports={
 	validationException:ValidationException,
 	foreignKeyException:ForeignKeyException,
@@ -49,5 +67,6 @@ module.exports={
 	DataBaseException:DataBaseException,
 	schemaValidationException:SchemaValidationException,
 	passwordValidationException:PasswordValidationException,
-	allowedRolException:AllowedRolException
+	allowedRolException:AllowedRolException,
+	generateDataError:generateDataError
 }
